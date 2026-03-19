@@ -2,43 +2,78 @@ import streamlit as st
 from openai import OpenAI
 import re
 
-# 1. Page Config & Professional Theme
-st.set_page_config(page_title="Senara Elite", page_icon="💎", layout="wide")
+# 1. Page Config
+st.set_page_config(page_title="Senara Intelligence", page_icon="💎", layout="wide")
 
-# --- CUSTOM CSS (This makes it look high-quality) ---
+# --- UNIFIED BRAND COLOR SCHEME ---
+# Primary Color: #3498db (Cobalt Blue)
+# Background: #0a192f (Deep Navy)
+# Sidebar: #112240 (Slate Navy)
+
 st.markdown("""
     <style>
-    /* Change background and font */
+    /* Main App Background */
     .stApp {
-        background-color: #0e1117;
+        background-color: #0a192f;
+        color: #ccd6f6;
     }
-    h1, h2, h3 {
-        color: #ffffff !important;
-        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    
+    /* Headers & Text */
+    h1, h2, h3, p {
+        color: #e6f1ff !important;
+        font-family: 'Inter', sans-serif;
     }
-    /* Style the buttons */
+
+    /* Sidebar Background & Borders */
+    [data-testid="stSidebar"] {
+        background-color: #112240;
+        border-right: 1px solid #233554;
+    }
+
+    /* Buttons - The 'Action Blue' */
     .stButton>button {
-        background-color: #4CAF50;
+        background-color: #3498db;
         color: white;
-        border-radius: 8px;
+        border-radius: 4px;
         border: none;
-        padding: 10px 24px;
-        transition: 0.3s;
-        font-weight: bold;
+        width: 100%;
+        padding: 12px;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        transition: all 0.2s ease;
     }
     .stButton>button:hover {
-        background-color: #45a049;
-        box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);
+        background-color: #2980b9;
+        box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
+        transform: translateY(-1px);
     }
-    /* Style the cards/boxes */
-    div.stCodeBlock {
+
+    /* Progress Bar Color */
+    .stProgress > div > div > div > div {
+        background-color: #3498db;
+    }
+
+    /* Custom Cards for results */
+    .result-card {
+        background-color: #112240;
+        padding: 20px;
         border-radius: 10px;
-        border: 1px solid #30363d;
+        border: 1px solid #233554;
+        margin-bottom: 20px;
     }
-    /* Style the sidebar */
-    [data-testid="stSidebar"] {
-        background-color: #161b22;
-        border-right: 1px solid #30363d;
+    
+    /* Tabs Selection */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 24px;
+        background-color: transparent;
+    }
+    .stTabs [data-baseweb="tab"] {
+        height: 50px;
+        color: #8892b0;
+    }
+    .stTabs [aria-selected="true"] {
+        color: #3498db !important;
+        border-bottom-color: #3498db !important;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -46,60 +81,56 @@ st.markdown("""
 # 2. Connection
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
-# 3. Sidebar
+# 3. Sidebar (Branding)
 with st.sidebar:
-    st.image("https://cdn-icons-png.flaticon.com/512/3176/3176392.png", width=50) # A small logo
-    st.title("Senara Intelligence")
-    st.write("Retire the stress of management.")
+    st.markdown("<h2 style='text-align: center; color: #3498db !important;'>💎 SENARA</h2>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; font-size: 0.8em;'>Elite Reputation Intelligence</p>", unsafe_allow_html=True)
     st.markdown("---")
-    st.caption("Version 2.4 Gold")
+    st.write("Current Session: **Active**")
+    st.write("Model: **GPT-4o Mini**")
 
 # 4. Tabs
 tab1, tab2 = st.tabs(["🚀 Response Engine", "📊 Strategic Audit"])
 
 # --- TAB 1: REPLY GENERATOR ---
 with tab1:
-    st.title("Instant Reply Generator")
+    st.markdown("### ⚡ Instant Reply Generator")
     col1, col2 = st.columns([1, 1], gap="large")
     with col1:
-        biz = st.text_input("Business Name", placeholder="e.g. Senara Bistro")
-        rev = st.text_area("Paste Review", height=200)
-        generate_btn = st.button("✨ Craft Response")
+        biz = st.text_input("Business Name", placeholder="Enter store name...")
+        rev = st.text_area("Customer Review", height=200, placeholder="Paste the text here...")
+        generate_btn = st.button("GENERATE ELITE RESPONSE")
         
     with col2:
-        if generate_btn:
-            if biz and rev:
-                with st.spinner("AI is writing..."):
-                    res = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role":"user", "content":f"Reply to this for {biz}: {rev}"}])
-                    answer = res.choices[0].message.content
-                    st.success("Draft Ready")
-                    st.code(answer, language=None)
-            else:
-                st.warning("Please fill out both fields.")
+        if generate_btn and biz and rev:
+            with st.spinner("Processing..."):
+                res = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role":"user", "content":f"Write a professional response for {biz}: {rev}"}])
+                st.markdown("<div class='result-card'>", unsafe_allow_html=True)
+                st.subheader("Final Draft")
+                st.code(res.choices[0].message.content, language=None)
+                st.markdown("</div>", unsafe_allow_html=True)
 
 # --- TAB 2: BUSINESS AUDITOR ---
 with tab2:
-    st.title("Strategic Business Audit")
-    st.write("Analyze patterns across multiple reviews.")
-    bulk_input = st.text_area("Paste 5+ Reviews here", height=250)
+    st.markdown("### 📋 Strategic Business Audit")
+    bulk_input = st.text_area("Bulk Reviews (Paste list)", height=200)
     
-    if st.button("📈 Run Full Diagnostic"):
+    if st.button("RUN FULL DIAGNOSTIC"):
         if bulk_input:
-            with st.spinner("Analyzing Business Health..."):
-                prompt = f"Analyze these reviews. Start your response with 'SCORE: X/10'. Then list PROS, CONS, and a 1-sentence ACTION PLAN. Reviews: {bulk_input}"
+            with st.spinner("Analyzing Intelligence..."):
+                prompt = f"Analyze these reviews. Start with 'SCORE: X/10'. Then list PROS, CONS, and ACTION PLAN. Reviews: {bulk_input}"
                 res = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role":"user", "content":prompt}])
                 report = res.choices[0].message.content
-                
-                # Safety Score Logic
                 scores = re.findall(r'\d+', report)
                 score_num = int(scores[0]) if scores else 5
                 
-                # UI Layout for Audit
-                c1, c2, c3 = st.columns(3)
-                c1.metric("Trust Score", f"{score_num}/10")
-                c2.metric("Market Sentiment", "Positive" if score_num > 6 else "Neutral")
-                c3.metric("Urgency", "Low" if score_num > 5 else "High")
+                # Metrics UI
+                m1, m2, m3 = st.columns(3)
+                m1.metric("Health Score", f"{score_num}/10")
+                m2.metric("Market Sentiment", "Positive" if score_num > 6 else "Critical")
+                m3.metric("Urgency", "Low" if score_num > 5 else "High")
                 
                 st.progress(score_num/10)
-                st.markdown("---")
+                st.markdown("<div class='result-card'>", unsafe_allow_html=True)
                 st.markdown(report)
+                st.markdown("</div>", unsafe_allow_html=True)
