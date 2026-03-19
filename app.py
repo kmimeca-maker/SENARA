@@ -2,7 +2,7 @@
 import streamlit as st
 from openai import OpenAI
 
-client = OpenAI(api_key="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")
+client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
 st.set_page_config(page_title="Senara Reviews", page_icon="🥈")
 st.title("🥈 Senara Reviews")
