@@ -4,126 +4,122 @@ from outscraper import ApiClient
 import plotly.graph_objects as go
 from fpdf import FPDF
 
-# 1. Setup & Styling
-st.set_page_config(page_title="Senara Elite | BI Protocol", page_icon="💎", layout="wide")
+# 1. Setup & Premium White Theme
+st.set_page_config(page_title="Senara Elite | Intelligence", page_icon="💎", layout="wide")
+
+# Initialize Session State for History
+if "audit_history" not in st.session_state:
+    st.session_state.audit_history = []
 
 try:
     client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
     out_client = ApiClient(api_key=st.secrets["OUTSCRAPER_API_KEY"])
 except:
-    st.error("Credentials missing in Secrets. Please check OPENAI_API_KEY and OUTSCRAPER_API_KEY.")
+    st.error("API Keys missing in Secrets.")
 
-# Improved CSS for visibility
+# Custom CSS for "Expensive" White Theme
 st.markdown("""
     <style>
-    .stApp { background: #0f172a; color: #e2e8f0; }
-    .report-card { 
-        background: rgba(255, 255, 255, 0.07); 
-        border-radius: 12px; 
-        padding: 20px; 
-        border: 1px solid rgba(255,255,255,0.1);
-        margin-top: 10px;
+    /* Main Background */
+    .stApp { background-color: #f8fafc; color: #1e293b; }
+    
+    /* Clean Sidebar */
+    section[data-testid="stSidebar"] { background-color: #ffffff !important; border-right: 1px solid #e2e8f0; }
+    
+    /* Modern Cards */
+    .premium-card {
+        background-color: #ffffff;
+        padding: 2rem;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        margin-bottom: 1.5rem;
     }
-    .stTabs [data-baseweb="tab-list"] { gap: 10px; }
-    .stTabs [data-baseweb="tab"] {
-        background-color: rgba(255,255,255,0.05);
-        border-radius: 4px 4px 0px 0px;
-        padding: 10px 20px;
+    
+    /* Typography */
+    h1, h2, h3 { color: #0f172a !important; font-weight: 700 !important; }
+    p { color: #475569; }
+    
+    /* Buttons */
+    .stButton>button {
+        background-color: #0f172a;
+        color: white;
+        border-radius: 8px;
+        padding: 0.5rem 1rem;
+        border: none;
+        transition: all 0.3s;
     }
+    .stButton>button:hover { background-color: #334155; transform: translateY(-1px); }
     </style>
     """, unsafe_allow_html=True)
 
-# PDF Logic
+# PDF Generator
 def create_pdf(biz_name, content):
     pdf = FPDF()
     pdf.add_page()
     pdf.set_font("Arial", 'B', 16)
-    pdf.cell(200, 10, txt=f"SENARA ELITE: {biz_name} AUDIT", ln=True, align='C')
+    pdf.cell(200, 10, txt=f"EXECUTIVE AUDIT: {biz_name}", ln=True, align='C')
     pdf.set_font("Arial", size=11)
     pdf.ln(10)
     pdf.multi_cell(0, 10, txt=content.encode('latin-1', 'replace').decode('latin-1'))
     return pdf.output(dest='S').encode('latin-1')
 
-# 2. Tabs Construction
-tab1, tab2, tab3 = st.tabs(["🚀 Response Engine", "📊 Strategic Auto-Audit", "⚔️ Market Versus"])
+# --- SIDEBAR HISTORY ---
+with st.sidebar:
+    st.title("💎 Senara Elite")
+    st.markdown("---")
+    st.subheader("Recent Intelligence")
+    if not st.session_state.audit_history:
+        st.write("No recent audits.")
+    for item in st.session_state.audit_history:
+        st.info(f"📍 {item['name']}")
 
-# --- TAB 1: RESPONSE ENGINE ---
+# --- MAIN INTERFACE ---
+tab1, tab2, tab3 = st.tabs(["🚀 Response Engine", "📊 Strategic Audit", "⚔️ Market Versus"])
+
 with tab1:
-    st.header("🚀 AI Response Generator")
-    st.write("Turn negative reviews into loyalty-building opportunities.")
-    rev_input = st.text_area("Paste Customer Review:", height=150, key="resp_input")
-    
-    if st.button("GENERATE ELITE RESPONSE"):
-        if rev_input:
-            with st.spinner("Drafting..."):
-                res = client.chat.completions.create(
-                    model="gpt-4o-mini",
-                    messages=[{"role": "user", "content": f"Write a professional, high-end response to this review: {rev_input}"}]
-                )
-                st.markdown("### Suggested Response")
-                st.markdown(f"<div class='report-card'>{res.choices[0].message.content}</div>", unsafe_allow_html=True)
+    st.title("Response Engine")
+    with st.container():
+        st.markdown("<div class='premium-card'>", unsafe_allow_html=True)
+        rev_in = st.text_area("Input Customer Sentiment", placeholder="Paste review here...", height=150)
+        if st.button("Generate Response"):
+            if rev_in:
+                res = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "user", "content": f"Write a luxury-brand response to: {rev_in}"}])
+                st.markdown("### Drafted Response")
+                st.write(res.choices[0].message.content)
+        st.markdown("</div>", unsafe_allow_html=True)
 
-# --- TAB 2: AUTO-AUDIT ---
 with tab2:
-    st.header("📊 Automated Business Intelligence")
-    target_link = st.text_input("Google Maps URL:", placeholder="Paste link here...", key="audit_link")
+    st.title("Strategic Audit")
+    url_in = st.text_input("Google Maps URL", placeholder="https://maps.google.com/...")
     
-    if st.button("EXECUTE AUDIT PROTOCOL"):
-        if target_link:
-            with st.status("📡 Extracting Intelligence...") as status:
-                data = out_client.google_maps_reviews(target_link, reviews_limit=20, language='en')
+    if st.button("Execute Audit"):
+        with st.spinner("Analyzing Market Data..."):
+            data = out_client.google_maps_reviews(url_in, reviews_limit=15, language='en')
+            if data:
+                biz_name = data[0].get('name', 'Business')
+                reviews = [r.get('review_text', '') for r in data[0].get('reviews_data') if r.get('review_text')]
+                ratings = [r.get('rating') for r in data[0].get('reviews_data')]
                 
-                if data and data[0].get('reviews_data'):
-                    biz_name = data[0].get('name', 'The Business')
-                    reviews = [r.get('review_text', '') for r in data[0].get('reviews_data') if r.get('review_text')]
-                    ratings = [r.get('rating') for r in data[0].get('reviews_data')]
-                    
-                    # AI Report
-                    prompt = f"Analyze reviews for {biz_name}. Score/10, 3 Pros, 3 Cons, 3-step Growth Plan: {' '.join(reviews[:15])}"
-                    res = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role":"user", "content":prompt}])
-                    report_text = res.choices[0].message.content
+                # AI Logic
+                ai_res = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role":"user", "content":f"Audit this: {' '.join(reviews[:10])}"}])
+                report = ai_res.choices[0].message.content
+                
+                # Add to History
+                if biz_name not in [x['name'] for x in st.session_state.audit_history]:
+                    st.session_state.audit_history.append({"name": biz_name, "report": report})
 
-                    status.update(label="✅ Analysis Complete", state="complete")
-                    
-                    col_left, col_right = st.columns([1, 1])
-                    with col_left:
-                        st.subheader(f"🛡️ {biz_name} Report")
-                        st.markdown(f"<div class='report-card'>{report_text}</div>", unsafe_allow_html=True)
-                        st.download_button("📥 Download PDF", data=create_pdf(biz_name, report_text), file_name=f"{biz_name}_Audit.pdf")
+                col1, col2 = st.columns(2)
+                with col1:
+                    st.markdown(f"<div class='premium-card'><h3>{biz_name} Report</h3>{report}</div>", unsafe_allow_html=True)
+                    st.download_button("Download Executive PDF", data=create_pdf(biz_name, report), file_name=f"{biz_name}_Audit.pdf")
+                with col2:
+                    st.markdown("<div class='premium-card'>", unsafe_allow_html=True)
+                    fig = go.Figure(data=[go.Histogram(x=ratings, marker_color='#0f172a')])
+                    fig.update_layout(title="Sentiment Distribution", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
+                    st.plotly_chart(fig)
+                    st.markdown("</div>", unsafe_allow_html=True)
 
-                    with col_right:
-                        st.subheader("📈 Rating Spread")
-                        fig = go.Figure(data=[go.Histogram(x=ratings, marker_color='#3b82f6')])
-                        fig.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font_color="white", height=300)
-                        st.plotly_chart(fig)
-                        
-                        if st.button("Draft Outreach Email"):
-                            e_res = client.chat.completions.create(
-                                model="gpt-4o-mini", 
-                                messages=[{"role":"user", "content": f"Write a pitch email to {biz_name} owner using this report: {report_text}"}]
-                            )
-                            st.markdown(f"<div class='report-card'>{e_res.choices[0].message.content}</div>", unsafe_allow_html=True)
-                else:
-                    st.error("Intelligence extraction failed. Verify link.")
-
-# --- TAB 3: MARKET VERSUS ---
 with tab3:
-    st.header("⚔️ Competitive Battle Report")
-    st.write("Compare your performance directly against a local rival.")
-    c1, c2 = st.columns(2)
-    with c1:
-        my_name = st.text_input("Your Business Name")
-        my_revs = st.text_area("Your Reviews:", height=200, key="my_revs")
-    with c2:
-        ri_name = st.text_input("Rival Business Name")
-        ri_revs = st.text_area("Rival Reviews:", height=200, key="ri_revs")
-    
-    if st.button("⚔️ INITIATE BATTLE ANALYSIS"):
-        if my_revs and ri_revs:
-            with st.spinner("Analyzing Market Position..."):
-                res = client.chat.completions.create(
-                    model="gpt-4o-mini",
-                    messages=[{"role":"user", "content": f"Compare {my_name} vs {ri_name}. Who is winning and where? {my_revs} vs {ri_revs}"}]
-                )
-                st.markdown("### Tactical Comparison")
-                st.markdown(f"<div class='report-card'>{res.choices[0].message.content}</div>", unsafe_allow_html=True)
+    st.title("Market Versus")
+    st.info("Compare competitors side-by-side. Code expanding...")
