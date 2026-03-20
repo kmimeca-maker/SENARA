@@ -3,7 +3,6 @@ from openai import OpenAI
 from outscraper import ApiClient
 import plotly.graph_objects as go
 from fpdf import FPDF
-import base64
 
 # 1. Setup & Styling
 st.set_page_config(page_title="Senara Elite | BI Protocol", page_icon="💎", layout="wide")
@@ -12,24 +11,24 @@ try:
     client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
     out_client = ApiClient(api_key=st.secrets["OUTSCRAPER_API_KEY"])
 except:
-    st.error("Credentials missing in Secrets.")
+    st.error("Credentials missing in Secrets. Please check OPENAI_API_KEY and OUTSCRAPER_API_KEY.")
 
-# Glassmorphism CSS
+# Improved CSS for visibility
 st.markdown("""
     <style>
-    .stApp { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #e2e8f0; }
-    [data-testid="stHeader"] { background: rgba(0,0,0,0); }
+    .stApp { background: #0f172a; color: #e2e8f0; }
     .report-card { 
-        background: rgba(255, 255, 255, 0.05); 
-        backdrop-filter: blur(10px);
-        border-radius: 15px; 
-        padding: 25px; 
+        background: rgba(255, 255, 255, 0.07); 
+        border-radius: 12px; 
+        padding: 20px; 
         border: 1px solid rgba(255,255,255,0.1);
-        margin-bottom: 20px;
+        margin-top: 10px;
     }
-    .stButton>button { 
-        background: linear-gradient(90deg, #3b82f6 0%, #2563eb 100%); 
-        color: white; border: none; border-radius: 8px; font-weight: bold;
+    .stTabs [data-baseweb="tab-list"] { gap: 10px; }
+    .stTabs [data-baseweb="tab"] {
+        background-color: rgba(255,255,255,0.05);
+        border-radius: 4px 4px 0px 0px;
+        padding: 10px 20px;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -39,57 +38,92 @@ def create_pdf(biz_name, content):
     pdf = FPDF()
     pdf.add_page()
     pdf.set_font("Arial", 'B', 16)
-    pdf.cell(200, 10, txt=f"SENARA ELITE: {biz_name} STRATEGIC AUDIT", ln=True, align='C')
+    pdf.cell(200, 10, txt=f"SENARA ELITE: {biz_name} AUDIT", ln=True, align='C')
     pdf.set_font("Arial", size=11)
     pdf.ln(10)
-    pdf.multi_cell(0, 10, txt=content)
+    pdf.multi_cell(0, 10, txt=content.encode('latin-1', 'replace').decode('latin-1'))
     return pdf.output(dest='S').encode('latin-1')
 
-# 2. Tabs
+# 2. Tabs Construction
 tab1, tab2, tab3 = st.tabs(["🚀 Response Engine", "📊 Strategic Auto-Audit", "⚔️ Market Versus"])
 
-# --- TAB 2: THE POLISHED AUDIT ---
-with tab2:
-    st.title("💎 Automated Business Intelligence")
-    target_link = st.text_input("Enter Google Maps URL", placeholder="Paste business link here...")
+# --- TAB 1: RESPONSE ENGINE ---
+with tab1:
+    st.header("🚀 AI Response Generator")
+    st.write("Turn negative reviews into loyalty-building opportunities.")
+    rev_input = st.text_area("Paste Customer Review:", height=150, key="resp_input")
     
-    if st.button("EXECUTE PROTOCOL"):
-        with st.status("📡 Extracting Intelligence...", expanded=True) as status:
-            data = out_client.google_maps_reviews(target_link, reviews_limit=20, language='en')
-            
-            if data and data[0].get('reviews_data'):
-                biz_name = data[0].get('name', 'The Business')
-                reviews = [r.get('review_text', '') for r in data[0].get('reviews_data') if r.get('review_text')]
-                ratings = [r.get('rating') for r in data[0].get('reviews_data')]
-                
-                # AI Analysis
-                prompt = f"Analyze these reviews for {biz_name}. Give a SCORE/10, 3 PROS, 3 CONS, and a GROWTH PLAN: {' '.join(reviews[:15])}"
-                res = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role":"user", "content":prompt}])
-                report = res.choices[0].message.content
+    if st.button("GENERATE ELITE RESPONSE"):
+        if rev_input:
+            with st.spinner("Drafting..."):
+                res = client.chat.completions.create(
+                    model="gpt-4o-mini",
+                    messages=[{"role": "user", "content": f"Write a professional, high-end response to this review: {rev_input}"}]
+                )
+                st.markdown("### Suggested Response")
+                st.markdown(f"<div class='report-card'>{res.choices[0].message.content}</div>", unsafe_allow_html=True)
 
-                # UI Layout
-                col1, col2 = st.columns([1, 1])
+# --- TAB 2: AUTO-AUDIT ---
+with tab2:
+    st.header("📊 Automated Business Intelligence")
+    target_link = st.text_input("Google Maps URL:", placeholder="Paste link here...", key="audit_link")
+    
+    if st.button("EXECUTE AUDIT PROTOCOL"):
+        if target_link:
+            with st.status("📡 Extracting Intelligence...") as status:
+                data = out_client.google_maps_reviews(target_link, reviews_limit=20, language='en')
                 
-                with col1:
-                    st.markdown(f"### 🛡️ Report: {biz_name}")
-                    st.markdown(f"<div class='report-card'>{report}</div>", unsafe_allow_html=True)
+                if data and data[0].get('reviews_data'):
+                    biz_name = data[0].get('name', 'The Business')
+                    reviews = [r.get('review_text', '') for r in data[0].get('reviews_data') if r.get('review_text')]
+                    ratings = [r.get('rating') for r in data[0].get('reviews_data')]
                     
-                    # PDF Download
-                    pdf_data = create_pdf(biz_name, report)
-                    st.download_button(label="📥 Download PDF Report", data=pdf_data, file_name=f"{biz_name}_Audit.pdf", mime="application/pdf")
+                    # AI Report
+                    prompt = f"Analyze reviews for {biz_name}. Score/10, 3 Pros, 3 Cons, 3-step Growth Plan: {' '.join(reviews[:15])}"
+                    res = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role":"user", "content":prompt}])
+                    report_text = res.choices[0].message.content
 
-                with col2:
-                    st.markdown("### 📈 Sentiment Distribution")
-                    fig = go.Figure(data=[go.Histogram(x=ratings, marker_color='#3b82f6', nbinsx=5)])
-                    fig.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font_color="white", height=300)
-                    st.plotly_chart(fig)
+                    status.update(label="✅ Analysis Complete", state="complete")
                     
-                    st.markdown("### 📧 Outreach Agent")
-                    if st.button("Draft Acquisition Email"):
-                        email_prompt = f"Write a cold email to the owner of {biz_name} mentioning their {sum(ratings)/len(ratings):.1f} star rating and offering to help fix their 'Cons' found in this report: {report}"
-                        email_res = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role":"user", "content":email_prompt}])
-                        st.markdown(f"<div class='report-card'>{email_res.choices[0].message.content}</div>", unsafe_allow_html=True)
-                
-                status.update(label="✅ Analysis Complete", state="complete")
-            else:
-                st.error("No intelligence found at that link.")
+                    col_left, col_right = st.columns([1, 1])
+                    with col_left:
+                        st.subheader(f"🛡️ {biz_name} Report")
+                        st.markdown(f"<div class='report-card'>{report_text}</div>", unsafe_allow_html=True)
+                        st.download_button("📥 Download PDF", data=create_pdf(biz_name, report_text), file_name=f"{biz_name}_Audit.pdf")
+
+                    with col_right:
+                        st.subheader("📈 Rating Spread")
+                        fig = go.Figure(data=[go.Histogram(x=ratings, marker_color='#3b82f6')])
+                        fig.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font_color="white", height=300)
+                        st.plotly_chart(fig)
+                        
+                        if st.button("Draft Outreach Email"):
+                            e_res = client.chat.completions.create(
+                                model="gpt-4o-mini", 
+                                messages=[{"role":"user", "content": f"Write a pitch email to {biz_name} owner using this report: {report_text}"}]
+                            )
+                            st.markdown(f"<div class='report-card'>{e_res.choices[0].message.content}</div>", unsafe_allow_html=True)
+                else:
+                    st.error("Intelligence extraction failed. Verify link.")
+
+# --- TAB 3: MARKET VERSUS ---
+with tab3:
+    st.header("⚔️ Competitive Battle Report")
+    st.write("Compare your performance directly against a local rival.")
+    c1, c2 = st.columns(2)
+    with c1:
+        my_name = st.text_input("Your Business Name")
+        my_revs = st.text_area("Your Reviews:", height=200, key="my_revs")
+    with c2:
+        ri_name = st.text_input("Rival Business Name")
+        ri_revs = st.text_area("Rival Reviews:", height=200, key="ri_revs")
+    
+    if st.button("⚔️ INITIATE BATTLE ANALYSIS"):
+        if my_revs and ri_revs:
+            with st.spinner("Analyzing Market Position..."):
+                res = client.chat.completions.create(
+                    model="gpt-4o-mini",
+                    messages=[{"role":"user", "content": f"Compare {my_name} vs {ri_name}. Who is winning and where? {my_revs} vs {ri_revs}"}]
+                )
+                st.markdown("### Tactical Comparison")
+                st.markdown(f"<div class='report-card'>{res.choices[0].message.content}</div>", unsafe_allow_html=True)
