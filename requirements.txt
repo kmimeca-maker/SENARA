@@ -1,3 +1,5 @@
 openai
 streamlit
 outscraper
+fpdf
+plotly
