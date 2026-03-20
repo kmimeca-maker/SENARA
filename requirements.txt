@@ -3,3 +3,4 @@ streamlit
 outscraper
 fpdf
 plotly
+pandas
