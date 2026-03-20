@@ -1,7 +1,6 @@
 import streamlit as st
 from openai import OpenAI
 from outscraper import ApiClient
-import re
 
 # 1. Core Setup
 st.set_page_config(page_title="Senara Elite", page_icon="💎", layout="wide")
@@ -11,7 +10,7 @@ try:
     client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
     out_client = ApiClient(api_key=st.secrets["OUTSCRAPER_API_KEY"])
 except Exception as e:
-    st.error("Connection Keys Missing in Secrets.")
+    st.error("Connection Keys Missing. Please check your Streamlit Secrets.")
 
 # --- CSS STYLING ---
 st.markdown("""
@@ -25,68 +24,49 @@ st.markdown("""
 # 3. App Tabs
 tab1, tab2, tab3 = st.tabs(["🚀 Response Engine", "📊 Auto-Audit", "⚔️ Market Versus"])
 
-# --- TAB 1: RESPONSE ENGINE ---
 with tab1:
     st.markdown("### 🚀 AI Response Generator")
-    review_input = st.text_area("Paste a customer review here to generate a perfect response:", height=150)
-    if st.button("GENERATE RESPONSE"):
-        if review_input:
-            with st.spinner("Writing response..."):
-                res = client.chat.completions.create(
-                    model="gpt-4o-mini",
-                    messages=[{"role": "user", "content": f"Write a professional, empathetic response to this review: {review_input}"}]
-                )
-                st.markdown(f"<div class='report-box'>{res.choices[0].message.content}</div>", unsafe_allow_html=True)
+    rev_to_respond = st.text_area("Paste a review to answer:", placeholder="Paste here...")
+    if st.button("GENERATE AI RESPONSE"):
+        if rev_to_respond:
+            res = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role":"user", "content":f"Write a professional response to: {rev_to_respond}"}])
+            st.markdown(f"<div class='report-box'>{res.choices[0].message.content}</div>", unsafe_allow_html=True)
 
-# --- TAB 2: THE AUTOMATED AUDIT ---
 with tab2:
     st.markdown("### 📊 Automated Business Intelligence")
-    target_link = st.text_input("Google Maps URL", placeholder="https://www.google.com/maps/place/...")
+    target_link = st.text_input("Google Maps URL", placeholder="Paste the KFC link here...")
     
     if st.button("🔍 INITIATE GLOBAL AUDIT"):
         if target_link:
-            with st.status("🚀 Deploying Scraper...", expanded=True) as status:
+            with st.status("🚀 Scraping Live Reviews...", expanded=True) as status:
                 try:
-                    # Logic: Get reviews from the link
-                    data = out_client.google_maps_reviews(target_link, reviews_limit=10, language='en')
+                    # Searching for the place and its reviews
+                    results = out_client.google_maps_reviews(target_link, reviews_limit=20, language='en')
                     
-                    reviews_text = ""
-                    biz_name = "The Business"
-                    
-                    if data and len(data) > 0:
-                        biz_name = data[0].get('name', 'The Business')
-                        reviews_list = data[0].get('reviews_data', [])
+                    if results and len(results) > 0:
+                        biz_name = results[0].get('name', 'The Business')
+                        reviews = results[0].get('reviews_data', [])
                         
-                        for r in reviews_list:
+                        review_text_combined = ""
+                        for r in reviews:
                             if r.get('review_text'):
-                                reviews_text += f"- {r.get('review_text')}\n"
-                    
-                    if reviews_text:
-                        st.write(f"🧠 AI Analyzing {biz_name}...")
-                        prompt = f"Analyze these reviews for {biz_name}. Give a SCORE (X/10), 3 PROS, 3 CONS, and a GROWTH PLAN: {reviews_text}"
-                        res = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role":"user", "content":prompt}])
+                                review_text_combined += f"- {r.get('review_text')}\n"
                         
-                        status.update(label="✅ Audit Complete", state="complete", expanded=False)
-                        st.subheader(f"Strategic Report: {biz_name}")
-                        st.markdown(f"<div class='report-box'>{res.choices[0].message.content}</div>", unsafe_allow_html=True)
+                        if review_text_combined:
+                            st.write(f"🧠 AI Analyzing {biz_name}...")
+                            prompt = f"Perform a strategic audit on these reviews for {biz_name}. Give a Score/10, Pros, Cons, and a Growth Plan: {review_text_combined}"
+                            ai_res = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role":"user", "content":prompt}])
+                            
+                            status.update(label="✅ Audit Complete", state="complete")
+                            st.subheader(f"Report for {biz_name}")
+                            st.markdown(f"<div class='report-box'>{ai_res.choices[0].message.content}</div>", unsafe_allow_html=True)
+                        else:
+                            st.error("Found the business, but couldn't find any written reviews. Try a busier location.")
                     else:
-                        status.update(label="❌ No Reviews Found", state="error")
-                        st.error("The scraper connected, but couldn't find text reviews. Try a more popular business link.")
+                        st.error("Could not find that location. Try a shorter link.")
                 except Exception as e:
-                    st.error(f"Scraper Error: {e}")
+                    st.error(f"Technical Error: {e}")
 
-# --- TAB 3: MARKET VERSUS ---
 with tab3:
-    st.markdown("### ⚔️ Competitive Battle Report")
-    col1, col2 = st.columns(2)
-    with col1:
-        my_revs = st.text_area("Paste Your Reviews")
-    with col2:
-        rival_revs = st.text_area("Paste Rival Reviews")
-    
-    if st.button("⚔️ EXECUTE BATTLE ANALYSIS"):
-        res = client.chat.completions.create(
-            model="gpt-4o-mini", 
-            messages=[{"role":"user", "content": f"Compare these businesses based on reviews: {my_revs} VS {rival_revs}"}]
-        )
-        st.markdown(f"<div class='report-box'>{res.choices[0].message.content}</div>", unsafe_allow_html=True)
+    st.markdown("### ⚔️ Market Versus")
+    st.write("Manual comparison mode active.")
