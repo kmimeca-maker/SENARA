@@ -1,13 +1,14 @@
 import streamlit as st
 from openai import OpenAI
 from outscraper import ApiClient
-import plotly.graph_objects as go
+import plotly.express as px
+import pandas as pd
 from fpdf import FPDF
 
-# 1. Setup & Premium White Theme
-st.set_page_config(page_title="Senara Elite | Intelligence", page_icon="💎", layout="wide")
+# 1. Page Configuration
+st.set_page_config(page_title="Senara Intelligence", page_icon="✨", layout="wide")
 
-# Initialize Session State for History
+# Initialize Session State
 if "audit_history" not in st.session_state:
     st.session_state.audit_history = []
 
@@ -17,109 +18,112 @@ try:
 except:
     st.error("API Keys missing in Secrets.")
 
-# Custom CSS for "Expensive" White Theme
+# 2. THE DESIGNER'S CSS (Soft UI & Modern Gradients)
 st.markdown("""
     <style>
-    /* Main Background */
-    .stApp { background-color: #f8fafc; color: #1e293b; }
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
     
-    /* Clean Sidebar */
-    section[data-testid="stSidebar"] { background-color: #ffffff !important; border-right: 1px solid #e2e8f0; }
+    html, body, [class*="st-"] { font-family: 'Inter', sans-serif; }
     
-    /* Modern Cards */
+    /* Subtle Background */
+    .stApp { background-color: #fcfcfd; color: #1a1a1a; }
+    
+    /* Glass Sidebar */
+    [data-testid="stSidebar"] { 
+        background-color: #ffffff !important; 
+        border-right: 1px solid #f0f0f0; 
+    }
+    
+    /* Soft UI Cards */
     .premium-card {
-        background-color: #ffffff;
-        padding: 2rem;
-        border-radius: 12px;
-        border: 1px solid #e2e8f0;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        margin-bottom: 1.5rem;
+        background: white;
+        padding: 30px;
+        border-radius: 20px;
+        border: 1px solid #f1f1f1;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+        margin-bottom: 25px;
     }
+
+    /* Modern Tabs */
+    .stTabs [data-baseweb="tab-list"] { background-color: transparent; }
+    .stTabs [data-baseweb="tab"] {
+        height: 50px;
+        background-color: transparent;
+        border-radius: 10px;
+        color: #666;
+    }
+    .stTabs [data-baseweb="tab"]:hover { color: #000; }
     
-    /* Typography */
-    h1, h2, h3 { color: #0f172a !important; font-weight: 700 !important; }
-    p { color: #475569; }
-    
-    /* Buttons */
+    /* Buttons: Dark & Elegant */
     .stButton>button {
-        background-color: #0f172a;
-        color: white;
-        border-radius: 8px;
-        padding: 0.5rem 1rem;
+        background-color: #111827;
+        color: #ffffff;
+        border-radius: 12px;
+        padding: 12px 24px;
         border: none;
-        transition: all 0.3s;
+        font-weight: 600;
+        width: 100%;
     }
-    .stButton>button:hover { background-color: #334155; transform: translateY(-1px); }
     </style>
     """, unsafe_allow_html=True)
 
-# PDF Generator
-def create_pdf(biz_name, content):
-    pdf = FPDF()
-    pdf.add_page()
-    pdf.set_font("Arial", 'B', 16)
-    pdf.cell(200, 10, txt=f"EXECUTIVE AUDIT: {biz_name}", ln=True, align='C')
-    pdf.set_font("Arial", size=11)
-    pdf.ln(10)
-    pdf.multi_cell(0, 10, txt=content.encode('latin-1', 'replace').decode('latin-1'))
-    return pdf.output(dest='S').encode('latin-1')
-
-# --- SIDEBAR HISTORY ---
+# 3. SIDEBAR (The Archive)
 with st.sidebar:
-    st.title("💎 Senara Elite")
-    st.markdown("---")
-    st.subheader("Recent Intelligence")
+    st.image("https://cdn-icons-png.flaticon.com/512/1055/1055644.png", width=50)
+    st.title("Senara")
+    st.markdown("### 🗂️ Analysis Vault")
     if not st.session_state.audit_history:
-        st.write("No recent audits.")
+        st.caption("No recent intelligence captured.")
     for item in st.session_state.audit_history:
-        st.info(f"📍 {item['name']}")
+        with st.expander(f"📍 {item['name']}"):
+            st.write(f"Score: {item['score']}")
 
-# --- MAIN INTERFACE ---
-tab1, tab2, tab3 = st.tabs(["🚀 Response Engine", "📊 Strategic Audit", "⚔️ Market Versus"])
-
-with tab1:
-    st.title("Response Engine")
-    with st.container():
-        st.markdown("<div class='premium-card'>", unsafe_allow_html=True)
-        rev_in = st.text_area("Input Customer Sentiment", placeholder="Paste review here...", height=150)
-        if st.button("Generate Response"):
-            if rev_in:
-                res = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "user", "content": f"Write a luxury-brand response to: {rev_in}"}])
-                st.markdown("### Drafted Response")
-                st.write(res.choices[0].message.content)
-        st.markdown("</div>", unsafe_allow_html=True)
+# 4. MAIN INTERFACE
+tab1, tab2, tab3 = st.tabs(["🚀 Engine", "📊 Strategic Audit", "⚔️ Market Versus"])
 
 with tab2:
-    st.title("Strategic Audit")
-    url_in = st.text_input("Google Maps URL", placeholder="https://maps.google.com/...")
+    st.markdown("## 📊 Strategic Intelligence")
+    st.write("Extract live market data and generate executive reports.")
     
-    if st.button("Execute Audit"):
-        with st.spinner("Analyzing Market Data..."):
-            data = out_client.google_maps_reviews(url_in, reviews_limit=15, language='en')
-            if data:
-                biz_name = data[0].get('name', 'Business')
-                reviews = [r.get('review_text', '') for r in data[0].get('reviews_data') if r.get('review_text')]
-                ratings = [r.get('rating') for r in data[0].get('reviews_data')]
+    url_input = st.text_input("Google Maps URL", placeholder="Paste the business link here...")
+    
+    if st.button("EXECUTE AUDIT"):
+        if url_input:
+            with st.status("📡 Intercepting Data...", expanded=True) as status:
+                data = out_client.google_maps_reviews(url_input, reviews_limit=20, language='en')
                 
-                # AI Logic
-                ai_res = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role":"user", "content":f"Audit this: {' '.join(reviews[:10])}"}])
-                report = ai_res.choices[0].message.content
-                
-                # Add to History
-                if biz_name not in [x['name'] for x in st.session_state.audit_history]:
-                    st.session_state.audit_history.append({"name": biz_name, "report": report})
+                if data:
+                    biz_name = data[0].get('name', 'Business')
+                    reviews_list = data[0].get('reviews_data', [])
+                    ratings = [r.get('rating') for r in reviews_list]
+                    texts = " ".join([r.get('review_text', '') for r in reviews_list[:10]])
+                    
+                    # AI Analysis Logic
+                    ai_prompt = f"Analyze reviews for {biz_name}. Format as: SCORE: X/10, PROS: [List], CONS: [List], STRATEGY: [List]. {texts}"
+                    res = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "user", "content": ai_prompt}])
+                    full_report = res.choices[0].message.content
+                    
+                    # Extract Score for Sidebar
+                    score_val = full_report.split("SCORE:")[1].split("/10")[0] if "SCORE:" in full_report else "N/A"
+                    st.session_state.audit_history.append({"name": biz_name, "report": full_report, "score": score_val})
 
-                col1, col2 = st.columns(2)
-                with col1:
-                    st.markdown(f"<div class='premium-card'><h3>{biz_name} Report</h3>{report}</div>", unsafe_allow_html=True)
-                    st.download_button("Download Executive PDF", data=create_pdf(biz_name, report), file_name=f"{biz_name}_Audit.pdf")
-                with col2:
-                    st.markdown("<div class='premium-card'>", unsafe_allow_html=True)
-                    fig = go.Figure(data=[go.Histogram(x=ratings, marker_color='#0f172a')])
-                    fig.update_layout(title="Sentiment Distribution", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
-                    st.plotly_chart(fig)
-                    st.markdown("</div>", unsafe_allow_html=True)
+                    status.update(label="✅ intelligence Extracted", state="complete")
 
-with tab3:
-    st.title("Market Versus")
-    st.info("Compare competitors side-by-side. Code expanding...")
+                    # DISPLAY RESULTS
+                    col1, col2 = st.columns([3, 2], gap="large")
+                    
+                    with col1:
+                        st.markdown(f"<div class='premium-card'><h3>🛡️ Executive Summary: {biz_name}</h3><p>{full_report}</p></div>", unsafe_allow_html=True)
+                    
+                    with col2:
+                        st.markdown("<div class='premium-card'><h3>📈 Sentiment Heatmap</h3>", unsafe_allow_html=True)
+                        # The "Sick Graph" Logic
+                        df = pd.DataFrame(ratings, columns=['Stars'])
+                        star_counts = df['Stars'].value_counts().reset_index()
+                        fig = px.pie(star_counts, values='count', names='Stars', hole=.4, 
+                                     color_discrete_sequence=px.colors.sequential.RdBu)
+                        fig.update_layout(showlegend=False, height=250, margin=dict(t=0, b=0, l=0, r=0))
+                        st.plotly_chart(fig, use_container_width=True)
+                        st.markdown("</div>", unsafe_allow_width=True)
+                        
+                        st.markdown("<div class='premium-card'><h3>📋 Next Steps</h3>Generate a pitch email for this client?</div>", unsafe_allow_html=True)
