@@ -16,24 +16,20 @@ try:
 except:
     st.error("Credential Error: Please check your Streamlit Secrets.")
 
-# 2. Studio Minimalist CSS (No Emojis, No Dark Boxes)
+# 2. Studio Minimalist CSS
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
-    
     html, body, [class*="st-"] { font-family: 'Inter', sans-serif; }
-    
-    /* Clean White Canvas */
     .stApp { background-color: #ffffff; color: #000000; }
     
-    /* Sidebar: Fixed & Refined */
+    /* Sidebar Fix */
     section[data-testid="stSidebar"] { 
         background-color: #fcfcfc !important; 
         border-right: 1px solid #e5e5e5; 
-        min-width: 250px !important;
     }
     
-    /* Input Fields: Professional Grey Borders */
+    /* Input Fields */
     textarea, input {
         background-color: #ffffff !important;
         color: #000000 !important;
@@ -41,7 +37,7 @@ st.markdown("""
         border-radius: 4px !important;
     }
 
-    /* Content Cards */
+    /* Cards & Tabs */
     .premium-card {
         background: #ffffff;
         padding: 32px;
@@ -49,33 +45,23 @@ st.markdown("""
         border: 1px solid #e5e7eb;
         margin-bottom: 24px;
     }
-
-    /* Tab Navigation */
     .stTabs [data-baseweb="tab-list"] { gap: 40px; border-bottom: 1px solid #e5e7eb; }
-    .stTabs [data-baseweb="tab"] { 
-        height: 60px; 
-        font-weight: 500; 
-        color: #6b7280; 
-        border: none !important;
-    }
+    .stTabs [data-baseweb="tab"] { height: 60px; font-weight: 500; color: #6b7280; border: none !important; }
     .stTabs [data-baseweb="tab--active"] { color: #000000 !important; border-bottom: 2px solid #000000 !important; }
 
-    /* Solid Black Buttons */
+    /* Button */
     .stButton>button {
         background-color: #000000;
         color: #ffffff;
         border-radius: 4px;
         padding: 12px 32px;
         border: none;
-        font-weight: 500;
-        letter-spacing: 0.5px;
-        transition: opacity 0.2s;
+        width: 100%;
     }
-    .stButton>button:hover { opacity: 0.8; color: #ffffff; }
     </style>
     """, unsafe_allow_html=True)
 
-# 3. Sidebar (Clean Vault)
+# 3. Sidebar
 with st.sidebar:
     st.markdown("### Senara Elite")
     st.markdown("---")
@@ -91,49 +77,51 @@ tab1, tab2, tab3 = st.tabs(["Response Engine", "Strategic Audit", "Market Versus
 with tab2:
     st.markdown("## Strategic Audit")
     st.write("Extract live market data and generate executive reports.")
-    
-    url_input = st.text_input("URL", placeholder="Paste Google Maps link here...")
-    
+    url_input = st.text_input("URL", placeholder="Paste Google Maps link here...", key="single_audit")
     if st.button("RUN ANALYSIS"):
         if url_input:
             with st.status("Gathering Intelligence...") as status:
-                try:
-                    data = out_client.google_maps_reviews(url_input, reviews_limit=20, language='en')
-                    if data:
-                        biz_name = data[0].get('name', 'Business')
-                        reviews = [r.get('review_text', '') for r in data[0].get('reviews_data') if r.get('review_text')]
-                        ratings = [r.get('rating') for r in data[0].get('reviews_data')]
-                        
-                        ai_res = client.chat.completions.create(
-                            model="gpt-4o-mini",
-                            messages=[{"role":"user", "content": f"Analyze reviews for {biz_name}. Format with professional headers: Score, Strengths, Weaknesses, and Growth Strategy. { ' '.join(reviews[:10]) }"}]
-                        )
-                        report = ai_res.choices[0].message.content
-                        
-                        if biz_name not in st.session_state.history:
-                            st.session_state.history.append(biz_name)
-                        
-                        status.update(label="Complete", state="complete")
-
-                        c1, c2 = st.columns([2, 1], gap="large")
-                        with c1:
-                            st.markdown(f"<div class='premium-card'><h3>{biz_name} Report</h3>{report}</div>", unsafe_allow_html=True)
-                        with c2:
-                            st.markdown("<div class='premium-card'><h3>Sentiment Mix</h3>", unsafe_allow_html=True)
-                            df = pd.DataFrame(ratings, columns=['Stars'])
-                            fig = px.pie(df, names='Stars', hole=.7, color_discrete_sequence=px.colors.sequential.Greys)
-                            fig.update_layout(showlegend=False, height=300, paper_bgcolor='rgba(0,0,0,0)')
-                            st.plotly_chart(fig, use_container_width=True)
-                            st.markdown("</div>", unsafe_allow_html=True)
-                except Exception as e:
-                    st.error(f"Analysis failed: {e}")
-
-with tab1:
-    st.markdown("## Response Engine")
-    st.write("Craft professional, brand-aligned responses to customer feedback.")
-    st.text_area("Review Context", height=250, placeholder="Paste customer review here...")
-    st.button("GENERATE RESPONSE")
+                data = out_client.google_maps_reviews(url_input, reviews_limit=10, language='en')
+                if data:
+                    biz_name = data[0].get('name', 'Business')
+                    reviews = [r.get('review_text', '') for r in data[0].get('reviews_data') if r.get('review_text')]
+                    ai_res = client.chat.completions.create(
+                        model="gpt-4o-mini",
+                        messages=[{"role":"user", "content": f"Brief audit for {biz_name}: { ' '.join(reviews) }"}]
+                    )
+                    st.markdown(f"<div class='premium-card'> {ai_res.choices[0].message.content} </div>", unsafe_allow_html=True)
+                    if biz_name not in st.session_state.history:
+                        st.session_state.history.append(biz_name)
+                    status.update(label="Complete", state="complete")
 
 with tab3:
     st.markdown("## Market Versus")
-    st.info("Side-by-side analysis mode is currently being optimized for high-volume data.")
+    st.write("Compare two businesses side-by-side to identify competitive advantages.")
+    
+    col_a, col_b = st.columns(2)
+    with col_a:
+        url_a = st.text_input("Primary Business URL", placeholder="Paste first Google Maps link...", key="url_a")
+    with col_b:
+        url_b = st.text_input("Competitor URL", placeholder="Paste second Google Maps link...", key="url_b")
+    
+    if st.button("EXECUTE COMPETITIVE COMPARISON"):
+        if url_a and url_b:
+            with st.status("Interrogating Competitor Data...") as status:
+                # Scrape both
+                data_a = out_client.google_maps_reviews(url_a, reviews_limit=10, language='en')
+                data_b = out_client.google_maps_reviews(url_b, reviews_limit=10, language='en')
+                
+                if data_a and data_b:
+                    name_a = data_a[0].get('name', 'Business A')
+                    name_b = data_b[0].get('name', 'Business B')
+                    
+                    revs_a = " ".join([r.get('review_text', '') for r in data_a[0].get('reviews_data') if r.get('review_text')])
+                    revs_b = " ".join([r.get('review_text', '') for r in data_b[0].get('reviews_data') if r.get('review_text')])
+                    
+                    # AI Comparison
+                    compare_prompt = f"Compare {name_a} vs {name_b}. Who is winning in service? Who has better value? Give a winner for each category and a final recommendation for {name_a} to beat {name_b}. Data A: {revs_a} | Data B: {revs_b}"
+                    
+                    res = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "user", "content": compare_prompt}])
+                    
+                    status.update(label="Intelligence Synced", state="complete")
+                    st.markdown(f"<div class='premium-card'><h3>Battle Report: {name_a} vs {name_b}</h3>{res.choices[0].message.content}</div>", unsafe_allow_html
