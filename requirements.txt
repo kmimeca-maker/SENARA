@@ -1,6 +1,6 @@
-openai
 streamlit
+openai
 outscraper
-fpdf
-plotly
 pandas
+plotly
+fpdf
