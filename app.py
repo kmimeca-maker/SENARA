@@ -3,10 +3,9 @@ from openai import OpenAI
 from outscraper import ApiClient
 import pandas as pd
 
-# 1. High-Level Configuration
-st.set_page_config(page_title="Senara Elite | BI", layout="wide", initial_sidebar_state="expanded")
+# 1. Page Configuration & Initialization
+st.set_page_config(page_title="Senara Elite", layout="wide")
 
-# Initialize Session States to prevent KeyErrors
 if "history" not in st.session_state:
     st.session_state.history = []
 if "found_rivals" not in st.session_state:
@@ -15,57 +14,52 @@ if "found_rivals" not in st.session_state:
 try:
     client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
     out_client = ApiClient(api_key=st.secrets["OUTSCRAPER_API_KEY"])
-except Exception as e:
-    st.error("Configuration Error: Ensure API keys are set in Streamlit Secrets.")
+except:
+    st.error("Credential Error: Please check your Streamlit Secrets.")
 
-# 2. Deep Visual Overhaul (Professional SaaS Aesthetic)
+# 2. Deep Visual Scan - Professional SaaS Styling
 st.markdown("""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-    
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
     html, body, [class*="st-"] { font-family: 'Inter', sans-serif; }
-    .stApp { background-color: #fcfcfd; color: #101828; }
+    
+    .stApp { background-color: #f8fafc; color: #0f172a; }
 
-    /* Modern Sidebar */
-    section[data-testid="stSidebar"] {
-        background-color: #0f172a !important;
-        border-right: 1px solid #1e293b;
-    }
+    /* Sidebar Navigation */
+    section[data-testid="stSidebar"] { background-color: #0f172a !important; }
     section[data-testid="stSidebar"] * { color: #f8fafc !important; }
 
-    /* Tab Navigation - Bold & Visible */
+    /* Modern Tabs */
     .stTabs [data-baseweb="tab-list"] {
-        gap: 8px;
-        background-color: #f2f4f7;
-        padding: 6px;
-        border-radius: 10px;
-        border: 1px solid #eaecf0;
+        gap: 12px;
+        background-color: #f1f5f9;
+        padding: 8px;
+        border-radius: 12px;
     }
     .stTabs [data-baseweb="tab"] {
-        height: 44px;
-        font-weight: 600 !important;
-        color: #667085 !important;
-        border-radius: 6px !important;
+        height: 45px;
+        font-weight: 700 !important;
+        color: #64748b !important;
+        border-radius: 8px !important;
         border: none !important;
-        padding: 0 20px !important;
     }
     .stTabs [data-baseweb="tab--active"] {
         background-color: #ffffff !important;
         color: #0f172a !important;
-        box-shadow: 0 1px 3px rgba(16, 24, 40, 0.1);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
     }
 
-    /* Professional Content Cards */
+    /* Result Cards */
     .report-card {
         background: #ffffff;
-        padding: 32px;
+        padding: 30px;
         border-radius: 12px;
-        border: 1px solid #eaecf0;
-        box-shadow: 0 4px 6px -1px rgba(16, 24, 40, 0.03);
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.04);
         margin-top: 20px;
     }
 
-    /* Buttons - Clean High Contrast */
+    /* High-Contrast Buttons */
     .stButton>button {
         background-color: #0f172a !important;
         color: #ffffff !important;
@@ -74,135 +68,97 @@ st.markdown("""
         width: 100%;
         border: none !important;
         height: 48px;
-        transition: all 0.2s;
-    }
-    .stButton>button:hover {
-        background-color: #1e293b !important;
-        transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
-    }
-    
-    /* Input Styling */
-    input, textarea {
-        border: 1px solid #d0d5dd !important;
-        border-radius: 8px !important;
     }
     </style>
     """, unsafe_allow_html=True)
 
-# 3. Sidebar: Strategic Archive
+# 3. Sidebar
 with st.sidebar:
     st.markdown("<h2 style='font-weight:700;'>SENARA ELITE</h2>", unsafe_allow_html=True)
-    st.markdown("<p style='opacity:0.6; font-size:12px;'>Intelligence Protocol v4.0</p>", unsafe_allow_html=True)
     st.markdown("---")
-    st.subheader("Saved Diagnostics")
-    if not st.session_state.history:
-        st.caption("No historical data recorded.")
+    st.subheader("Analysis History")
     for item in st.session_state.history:
-        st.markdown(f"<code style='color:#94a3b8;'>• {item}</code>", unsafe_allow_html=True)
+        st.markdown(f"• {item}")
 
-# 4. Main UI Layout
-st.markdown("<h1 style='letter-spacing:-1.5px; font-weight:700;'>Market Intelligence Dashboard</h1>", unsafe_allow_html=True)
-st.markdown("<p style='color:#667085; font-size:18px;'>Analyze performance, monitor rivals, and capture market share.</p>", unsafe_allow_html=True)
+# 4. Main UI
+st.title("Business Intelligence Dashboard")
+st.markdown("Professional market analysis and competitive intelligence.")
 
-t1, t2, t3 = st.tabs(["💬 Review Helper", "📊 Strategic Audit", "⚔️ Competitive Intelligence"])
+tab1, tab2, tab3 = st.tabs(["Review Helper", "Location Audit", "Competitive Intelligence"])
 
-with t1:
-    st.subheader("Review Response Engine")
-    st.write("Generate brand-aligned, professional responses to customer feedback.")
-    rev_in = st.text_area("Paste Review Text", placeholder="Input customer feedback here...", height=200)
-    if st.button("Generate Professional Draft", key="btn_rev"):
-        st.info("AI is analyzing sentiment and drafting response...")
+with tab1:
+    st.subheader("Review Helper")
+    st.text_area("Customer Review:", placeholder="Paste text...", height=150)
+    st.button("Draft Response", key="btn_r")
 
-with t2:
-    st.subheader("Location Diagnostic")
-    st.write("Perform a deep-dive audit of a specific business location's reputation.")
-    u_audit = st.text_input("Entity URL (Google Maps)", placeholder="Paste link here...", key="audit_in")
-    if st.button("Execute Strategic Audit", key="btn_audit"):
-        st.warning("Extracting live market data...")
+with tab2:
+    st.subheader("Location Audit")
+    st.text_input("Google Maps Link:", placeholder="Paste link...", key="audit_link")
+    st.button("Run Diagnostic", key="btn_d")
 
-with t3:
-    st.subheader("Competitive Intelligence Suite")
+with tab3:
+    st.subheader("Competitive Intelligence")
     
-    # Combined Mode: Scanner + Manual
-    st.markdown("""
-    **Intelligence Options:**
-    * **Automated Radar:** Paste your link and we will scout rivals within 1km.
-    * **Direct Comparison:** Manually input a specific competitor URL.
-    """)
-    
-    primary_url = st.text_input("Your Business URL", placeholder="Paste your Google Maps link...", key="pri_url")
-    
-    c1, c2 = st.columns(2)
-    with c1:
-        if st.button("📡 Scan 1km Radius"):
+    # Primary Business Input
+    primary_url = st.text_input("Your Business Link", placeholder="Paste your Google Maps link here...", key="p_url")
+    st.markdown("---")
+
+    # TWO DISTINCT MODES
+    mode = st.radio("Choose Comparison Mode:", ["Radar (Auto-Scout Rivals)", "Market Versus (Manual Link)"], horizontal=True)
+
+    if mode == "Radar (Auto-Scout Rivals)":
+        st.write("Automatically find and compare against the top 3 rivals within 1km.")
+        if st.button("📡 Start Local Radar"):
             if primary_url:
-                with st.status("Deploying local radar...") as s:
+                with st.status("Scanning market...") as s:
                     try:
-                        # Get Primary Data
                         me = out_client.google_maps_reviews(primary_url, reviews_limit=1)
                         lat, lon = me[0]['latitude'], me[0]['longitude']
                         cat = me[0].get('type', 'Business')
-                        
-                        # Find Rivals
-                        query = f"{cat} near {lat}, {lon}"
-                        found = out_client.google_maps_search([query], limit=10)
-                        
-                        # Filter top 3
-                        rivals = [r for r in found[0] if r.get('google_id') != me[0].get('google_id')][:3]
-                        st.session_state.found_rivals = {r['name']: r for r in rivals}
-                        s.update(label="Rivals Detected", state="complete")
+                        rivals = out_client.google_maps_search([f"{cat} near {lat}, {lon}"], limit=5)
+                        top_3 = [r for r in rivals[0] if r.get('google_id') != me[0].get('google_id')][:3]
+                        st.session_state.found_rivals = {r['name']: r for r in top_3}
+                        s.update(label="Rivals Found", state="complete")
                     except Exception as e:
-                        st.error(f"Scan Failure: {e}")
+                        st.error(f"Scan Error: {e}")
             else:
-                st.warning("Please provide your link to begin scanning.")
+                st.warning("Please enter your business link first.")
 
-    with c2:
-        manual_url = st.text_input("Or Paste Competitor URL Manually", placeholder="Optional rival link...")
-
-    # Display Results Logic
-    if st.session_state.found_rivals or manual_url:
-        st.markdown("---")
-        
-        # Determine which rival to compare
-        target_name = ""
-        target_link = ""
-        
-        if manual_url:
-            target_name = "Manual Competitor"
-            target_link = manual_url
-        elif st.session_state.found_rivals:
-            # Map View for Scouts
-            m_data = pd.DataFrame([{"lat": r['latitude'], "lon": r['longitude'], "name": r['name']} for r in st.session_state.found_rivals.values()])
-            st.map(m_data)
+        if st.session_state.found_rivals:
+            # Map View
+            m_df = pd.DataFrame([{"lat": r['latitude'], "lon": r['longitude'], "name": r['name']} for r in st.session_state.found_rivals.values()])
+            st.map(m_df)
             
-            sel = st.selectbox("Select scouted rival to compare:", list(st.session_state.found_rivals.keys()))
-            target_name = sel
-            target_link = f"http://googleusercontent.com/maps.google.com/9{st.session_state.found_rivals[sel]['google_id']}"
-
-        if st.button("Generate Comparative Strategy Report"):
-            with st.status(f"Benchmarking against {target_name}...") as s:
-                try:
+            selected_rival = st.selectbox("Select scouted rival:", list(st.session_state.found_rivals.keys()))
+            if st.button("Compare with Scouted Rival"):
+                rival_id = st.session_state.found_rivals[selected_rival]['google_id']
+                rival_link = f"https://www.google.com/maps/search/McDonalds+Morden0:{rival_id}"
+                
+                with st.status(f"Comparing with {selected_rival}...") as s:
                     d_a = out_client.google_maps_reviews(primary_url, reviews_limit=15)
-                    d_b = out_client.google_maps_reviews(target_link, reviews_limit=15)
-                    
+                    d_b = out_client.google_maps_reviews(rival_link, reviews_limit=15)
                     n_a = d_a[0]['name']
-                    n_b = d_b[0].get('name', target_name)
-                    
-                    if n_a not in st.session_state.history:
-                        st.session_state.history.append(n_a)
+                    if n_a not in st.session_state.history: st.session_state.history.append(n_a)
 
-                    prompt = f"""
-                    Compare {n_a} vs {n_b}.
-                    1. Create a table comparing 'Service', 'Price', and 'Quality' (Score 1-10).
-                    2. Revenue Impact: Why might customers choose {n_b} over {n_a}?
-                    3. Action Plan: 3 immediate steps for {n_a} to improve market position.
-                    """
-                    
+                    prompt = f"Compare {n_a} vs {selected_rival}. 1. Score table. 2. Revenue leakage (why pick them?). 3. 3-step win plan."
                     res = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role":"user", "content":prompt}])
-                    s.update(label="Intelligence Finalized", state="complete")
-                    
-                    st.markdown(f"### Strategy Report: {n_a} vs {n_b}")
                     st.markdown(f'<div class="report-card">{res.choices[0].message.content}</div>', unsafe_allow_html=True)
-                except Exception as e:
-                    st.error(f"Analysis Error: {e}")
+
+    else: # Manual Market Versus Mode
+        st.write("Directly compare your business against a specific competitor link.")
+        manual_url = st.text_input("Competitor Google Maps Link", placeholder="Paste competitor link here...")
+        
+        if st.button("Run Market Versus Analysis"):
+            if primary_url and manual_url:
+                with st.status("Analyzing manual comparison...") as s:
+                    try:
+                        d_a = out_client.google_maps_reviews(primary_url, reviews_limit=15)
+                        d_b = out_client.google_maps_reviews(manual_url, reviews_limit=15)
+                        n_a, n_b = d_a[0]['name'], d_b[0]['name']
+                        if n_a not in st.session_state.history: st.session_state.history.append(n_a)
+
+                        prompt = f"Compare {n_a} vs {n_b}. 1. Score table. 2. Revenue leakage. 3. 3-step win plan."
+                        res = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role":"user", "content":prompt}])
+                        st.markdown(f'<div class="report-card">{res.choices[0].message.content}</div>', unsafe_allow_html=True)
+                    except Exception as e:
+                        st.error(f"Analysis failed: {e}")
