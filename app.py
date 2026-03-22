@@ -2,10 +2,9 @@ import streamlit as st
 from openai import OpenAI
 from outscraper import ApiClient
 
-# 1. System Initialization
-st.set_page_config(page_title="Senara Elite | Strategic Intelligence", layout="wide")
+# 1. Setup & Error Prevention
+st.set_page_config(page_title="Senara Elite", layout="wide")
 
-# Critical Fix: Initialize state before any sidebar or logic execution
 if "history" not in st.session_state:
     st.session_state.history = []
 
@@ -13,61 +12,52 @@ try:
     client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
     out_client = ApiClient(api_key=st.secrets["OUTSCRAPER_API_KEY"])
 except:
-    st.error("Credential Error: Please verify your Streamlit Secrets.")
+    st.error("Credential Error: Please check your Streamlit Secrets.")
 
-# 2. Executive UI Styling (High-Contrast / Professional)
+# 2. Modern & Readable UI Styling
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
-    
     html, body, [class*="st-"] { font-family: 'Inter', sans-serif; }
-    .stApp { background-color: #ffffff; color: #1e293b; }
+    
+    /* Sidebar: Clean Dark Mode */
+    section[data-testid="stSidebar"] { background-color: #111827 !important; }
+    section[data-testid="stSidebar"] * { color: #ffffff !important; }
 
-    /* Professional Sidebar */
-    section[data-testid="stSidebar"] {
-        background-color: #0f172a !important;
-        border-right: 1px solid #1e293b;
-    }
-    section[data-testid="stSidebar"] * { color: #f1f5f9 !important; }
-
-    /* Navigation: Clean & Focused */
+    /* Tabs: Bold & Easy to See */
     .stTabs [data-baseweb="tab-list"] {
-        gap: 20px;
-        background-color: #f8fafc;
+        gap: 10px;
+        background-color: #f3f4f6;
         padding: 8px;
-        border-radius: 8px;
-        border: 1px solid #e2e8f0;
+        border-radius: 10px;
     }
     .stTabs [data-baseweb="tab"] {
-        height: 40px;
+        height: 45px;
         font-weight: 600 !important;
-        font-size: 14px !important;
-        color: #64748b !important;
+        color: #4b5563 !important;
         border: none !important;
     }
     .stTabs [data-baseweb="tab--active"] {
         background-color: #ffffff !important;
-        color: #0f172a !important;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        color: #111827 !important;
         border-radius: 6px !important;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     }
 
-    /* Executive Report Cards */
-    .report-card {
+    /* Professional Result Cards */
+    .result-card {
         background: #ffffff;
-        padding: 35px;
-        border-radius: 8px;
-        border: 1px solid #e2e8f0;
+        padding: 25px;
+        border-radius: 10px;
+        border: 1px solid #e5e7eb;
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-        margin-top: 25px;
+        margin-top: 20px;
     }
 
-    /* Action Buttons */
     .stButton>button {
-        background-color: #0f172a !important;
+        background-color: #111827 !important;
         color: #ffffff !important;
         border-radius: 6px !important;
-        padding: 12px 24px !important;
         font-weight: 600 !important;
         width: 100%;
         border: none !important;
@@ -75,77 +65,83 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# 3. Sidebar: Strategic Archive
+# 3. Sidebar Archive
 with st.sidebar:
-    st.markdown("<h2 style='font-weight:700;'>SENARA ELITE</h2>", unsafe_allow_html=True)
-    st.markdown("<p style='opacity:0.6; font-size:13px;'>Intelligence Protocol v3.0</p>", unsafe_allow_html=True)
+    st.title("Senara Elite")
     st.markdown("---")
-    st.markdown("### Strategic Archive")
+    st.subheader("Saved Audits")
     if not st.session_state.history:
-        st.caption("No historical data available.")
+        st.caption("No history yet.")
     for item in st.session_state.history:
-        st.markdown(f"<p style='font-size:13px; color:#94a3b8;'>• {item}</p>", unsafe_allow_html=True)
+        st.markdown(f"• {item}")
 
-# 4. Dashboard Header
-st.markdown("<h1 style='font-weight:700; letter-spacing:-1.5px; margin-bottom:0;'>Market Intelligence Dashboard</h1>", unsafe_allow_html=True)
-st.markdown("<p style='color:#64748b; margin-bottom:35px;'>Quantitative analysis and competitive displacement strategies.</p>", unsafe_allow_html=True)
+# 4. Main App Header
+st.title("Business Intelligence Center")
+st.markdown("Improve your business by analyzing customer feedback and local competition.")
 
-# 5. Operational Modules
-tab1, tab2, tab3 = st.tabs(["Response Management", "Location Diagnostic", "Competitive Benchmarking"])
+tab1, tab2, tab3 = st.tabs(["Review Helper", "Business Audit", "Competitive Comparison"])
 
 with tab1:
-    st.markdown("### Response Management")
-    st.write("Generate brand-aligned executive communications for customer feedback.")
-    review_input = st.text_area("Review Context", placeholder="Insert review text...", height=180)
-    if st.button("Generate Executive Response"):
-        st.info("System is drafting a professional alignment...")
+    st.subheader("Review Helper")
+    st.write("Draft polite and professional replies to your customer reviews.")
+    review_text = st.text_area("Paste the review here:", height=150)
+    if st.button("Draft Reply"):
+        st.info("Generating a draft for you...")
 
 with tab2:
-    st.markdown("### Location Diagnostic")
-    st.write("Perform a deep-dive audit of specific operational performance data.")
-    url_audit = st.text_input("Entity URL (Google Maps)", placeholder="Paste link...")
-    if st.button("Execute Diagnostic"):
-        st.warning("Extracting market data for analysis...")
+    st.subheader("Business Audit")
+    st.write("Get a detailed report on what customers love and hate about a specific location.")
+    url_audit = st.text_input("Enter Google Maps Link:", key="audit_input")
+    if st.button("Run Audit"):
+        st.warning("Fetching data... this takes about 30 seconds.")
 
 with tab3:
-    st.markdown("### Competitive Benchmarking")
-    st.write("Direct side-by-side performance analysis between Primary Entity and Market Rival.")
+    st.subheader("Competitive Comparison")
     
-    col_a, col_b = st.columns(2)
-    with col_a:
-        url_a = st.text_input("Primary Entity URL", placeholder="Your link...", key="v_a")
-    with col_b:
-        url_b = st.text_input("Competitor Entity URL", placeholder="Rival link...", key="v_b")
+    # Tutorial Section
+    with st.expander("📖 How to use this tool", expanded=True):
+        st.markdown("""
+        1. **Find your business** on Google Maps and copy the link from the 'Share' button.
+        2. Paste your link into the **'Your Business'** box below.
+        3. **Find a competitor** nearby and copy their Google Maps link.
+        4. Paste their link into the **'Competitor'** box.
+        5. Click **'Compare Businesses'** to see how you stack up.
+        """)
     
-    if st.button("Execute Benchmarking Analysis"):
-        if url_a and url_b:
-            with st.status("Analyzing Market Displacement...") as s:
+    col1, col2 = st.columns(2)
+    with col1:
+        u1 = st.text_input("Your Business Link", placeholder="Paste Google Maps URL...")
+    with col2:
+        u2 = st.text_input("Competitor Link", placeholder="Paste Google Maps URL...")
+    
+    if st.button("Compare Businesses"):
+        if u1 and u2:
+            with st.status("Analyzing differences...") as s:
                 try:
-                    data_a = out_client.google_maps_reviews(url_a, reviews_limit=15)
-                    data_b = out_client.google_maps_reviews(url_b, reviews_limit=15)
+                    # Scraping logic
+                    d1 = out_client.google_maps_reviews(u1, reviews_limit=10)
+                    d2 = out_client.google_maps_reviews(u2, reviews_limit=10)
                     
-                    name_a = data_a[0].get('name', 'Primary')
-                    name_b = data_b[0].get('name', 'Competitor')
+                    name1, name2 = d1[0]['name'], d2[0]['name']
                     
-                    if name_a not in st.session_state.history:
-                        st.session_state.history.append(name_a)
+                    if name1 not in st.session_state.history:
+                        st.session_state.history.append(name1)
 
-                    # Serious, Structured Business Prompt
+                    # Simple, Direct AI Prompt
                     prompt = f"""
-                    Perform a professional competitive analysis between {name_a} and {name_b}.
-                    Output requirements:
-                    1. A Table comparing 'Value Proposition', 'Service Efficiency', and 'Product Quality' (Weighted Score /10).
-                    2. Section 'Market Displacement Risk': Identify exactly why customers are migrating to {name_b}.
-                    3. Section 'Strategic Recommendations': Provide two high-impact operational changes for {name_a}.
+                    Compare {name1} and {name2} using their reviews.
+                    1. Create a table comparing them on Service, Price, and Quality (Score 1-10).
+                    2. Explain why people might pick {name2} over {name1}.
+                    3. List 3 simple things {name1} should do to improve.
                     """
                     
                     res = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role":"user", "content":prompt}])
                     
-                    s.update(label="Analysis Finalized", state="complete")
+                    s.update(label="Comparison Ready", state="complete")
                     
-                    st.markdown(f"#### Comparative Report: {name_a} vs {name_b}")
-                    st.markdown('<div class="report-card">', unsafe_allow_html=True)
+                    st.markdown(f"### Comparison: {name1} vs {name2}")
+                    st.markdown('<div class="result-card">', unsafe_allow_html=True)
                     st.markdown(res.choices[0].message.content)
                     st.markdown('</div>', unsafe_allow_html=True)
                 except Exception as e:
-                    st.error(f"Intelligence Failure: {e}")
+                    st.error(f"Something went wrong: {e}")
